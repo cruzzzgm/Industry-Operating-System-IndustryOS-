@@ -1,0 +1,68 @@
+# =============================================================================
+# DOCKERFILE - Frontend React (Vite)
+# IndustryOS - Sistema de Gestão Industrial
+# =============================================================================
+#
+# IMAGEM BASE: Node.js 20 Alpine (leve e atualizada)
+#
+# ESTÁGIOS:
+# - Stage 1: Dependências (cache eficiente)
+# - Stage 2: Build (compilação da aplicação)
+# - Stage 3: Runtime (servidor nginx para arquivos estáticos)
+#
+# Para desenvolvimento, usa Vite dev server diretamente.
+#
+# =============================================================================
+
+# =============================================================================
+# STAGE 1: DEPENDÊNCIAS
+# =============================================================================
+FROM node:20-alpine AS dependencies
+
+WORKDIR /app
+
+# Copiar arquivos de dependências primeiro (cache eficiente)
+COPY package*.json ./
+
+# Instalar dependências
+RUN npm ci --only=production && npm cache clean --force
+
+# =============================================================================
+# STAGE 2: BUILD (Produção)
+# =============================================================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copiar dependências do stage anterior
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# Copiar código fonte
+COPY . .
+
+# Build da aplicação
+# ARG para variáveis de build
+ARG VITE_API_URL=http://localhost:8000/api/v1
+ENV VITE_API_URL=${VITE_API_URL}
+
+RUN npm run build
+
+# =============================================================================
+# STAGE 3: RUNTIME (Desenvolvimento com Vite)
+# =============================================================================
+FROM node:20-alpine AS runtime
+
+WORKDIR /app
+
+# Instalar dependências de desenvolvimento
+COPY package*.json ./
+RUN npm install
+
+# Copiar código fonte
+COPY . .
+
+# Expor porta do Vite
+EXPOSE 5173
+
+# Comando de desenvolvimento (hot reload)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

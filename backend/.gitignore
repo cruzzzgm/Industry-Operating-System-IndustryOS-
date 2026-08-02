@@ -1,0 +1,67 @@
+# =============================================================================
+# GITIGNORE - Backend Python
+# =============================================================================
+
+# Ambiente virtual
+venv/
+env/
+ENV/
+.venv/
+
+# Variáveis de ambiente (sensíveis!)
+.env
+.env.local
+.env.*.local
+
+# Banco de dados SQLite (dados locais)
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+*.log
+logs/
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore

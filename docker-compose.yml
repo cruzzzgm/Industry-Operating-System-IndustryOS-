@@ -1,0 +1,125 @@
+# =============================================================================
+# DOCKER COMPOSE - IndustryOS
+# Sistema de Gestão Industrial com Backend Python (FastAPI) + Frontend React
+# =============================================================================
+# 
+# ARQUITETURA:
+# - backend: API Python (FastAPI) com SQLite (futuro: PostgreSQL)
+# - frontend: React + Vite (interface do usuário)
+#
+# USO:
+#   docker-compose up -d          # Iniciar todos os serviços
+#   docker-compose logs -f backend # Ver logs do backend
+#   docker-compose down           # Parar todos os serviços
+#
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # BACKEND - API Python (FastAPI)
+  # ===========================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: industryos-backend
+    restart: unless-stopped
+    
+    # Portas expostas
+    ports:
+      - "8000:8000"  # API HTTP
+    
+    # Variáveis de ambiente
+    environment:
+      # Modo de execução
+      - ENVIRONMENT=development
+      
+      # Configuração do banco de dados SQLite
+      # Futuro: trocar para PostgreSQL em produção
+      - DATABASE_URL=sqlite:///./data/industryos.db
+      - DATABASE_ECHO=False  # True para debug de SQL
+      
+      # Configurações de segurança (futura implementação JWT)
+      - SECRET_KEY=dev-secret-key-change-in-production-32chars-long
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      
+      # CORS - Origens permitidas (frontend) - formato JSON para pydantic-settings 2.x
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","http://frontend:5173"]
+    
+    # Volumes para persistência de dados
+    volumes:
+      # Persistir banco de dados SQLite entre reinicializações
+      - ./backend/data:/app/data
+      # Hot-reload em desenvolvimento
+      - ./backend/app:/app/app:ro
+    
+    # Rede compartilhada entre serviços
+    networks:
+      - industryos-network
+    
+    # Healthcheck - verificar se a API está respondendo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Labels para organização
+    labels:
+      - "com.industryos.service=backend"
+      - "com.industryos.module=financeiro"
+
+  # ===========================================================================
+  # FRONTEND - React + Vite
+  # ===========================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: industryos-frontend
+    restart: unless-stopped
+    
+    ports:
+      - "5173:5173"  # Vite dev server
+    
+    environment:
+      # URL da API backend
+      - VITE_API_URL=http://localhost:8000/api/v1
+      - VITE_BACKEND_URL=http://backend:8000
+    
+    volumes:
+      # Hot-reload em desenvolvimento
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro
+    
+    depends_on:
+      backend:
+        condition: service_healthy
+    
+    networks:
+      - industryos-network
+    
+    labels:
+      - "com.industryos.service=frontend"
+
+# =============================================================================
+# REDE COMPARTILHADA
+# =============================================================================
+networks:
+  industryos-network:
+    driver: bridge
+    name: industryos-network
+    labels:
+      - "com.industryos.network=main"
+
+# =============================================================================
+# VOLUMES NOMEADOS (opcional - usar bind mounts por enquanto)
+# =============================================================================
+volumes:
+  sqlite-data:
+    driver: local
+    labels:
+      - "com.industryos.volume=database"
