@@ -1,10 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/ (referência da documentação do Vite)
-export default defineConfig(({ mode }) => ({
+// https://vitejs.dev/config/
+export default defineConfig(() => ({
+  // Base atualizada para o GitHub Pages encontrar os arquivos
+  base: "/Industry-Operating-System-IndustryOS-/",
   server: {
     host: true,
     port: 5173,
@@ -15,7 +16,8 @@ export default defineConfig(({ mode }) => ({
       usePolling: true,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  // Plugin do lovable removido, deixando só o react
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
