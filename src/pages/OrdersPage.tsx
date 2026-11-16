@@ -316,11 +316,10 @@ export default function OrdersPage() {
         grossWeight: data.grossWeight,
         packageType: data.packageType,
       });
-      await loadOrders();
-      toast.success("Pedido finalizado com sucesso!");
     } catch (error) {
       console.error("Erro ao finalizar pedido:", error);
       toast.error("Erro ao finalizar pedido.");
+      return;
     }
 
     if (data.generateFinanceEntry) {
@@ -347,6 +346,7 @@ export default function OrdersPage() {
 
     setFinalizingOrder(null);
     toast.success(`Pedido ${finalizingOrder.id} finalizado!`);
+    await loadOrders();
   }, [finalizingOrder]);
 
   const collectionRows = useMemo(() => orders.filter((o) => o.status === "Finalizado" && !o.hasRecibo), [orders]);
